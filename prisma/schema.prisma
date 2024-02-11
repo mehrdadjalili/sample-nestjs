@@ -1,0 +1,83 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserStatus {
+  ACTIVE
+  DEACTIVE
+  DELETED
+  UNVERIFIED
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+model User {
+  id Int @id @default(autoincrement())
+  name String
+  email String @unique
+  password String
+  status UserStatus @default(UNVERIFIED)
+  role UserRole @default(USER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  notes Note[]
+  sessions Session[]
+  codes VerifyCode[]
+
+  @@map("users")
+}
+
+model VerifyCode {
+  id Int @id @default(autoincrement())
+  userId Int
+  deviceName String?
+  token String @default(uuid()) @unique
+  code String
+  wrongCount Int @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  admin User @relation(fields: [userId], references: [id])
+
+  @@map("verifyCodes")
+}
+
+model Session {
+  id Int @id @default(autoincrement())
+  userId Int
+  deviceName String
+  lastIp String
+  status Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  isOnline Boolean @default(false)
+  
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("sessions")
+}
+
+model Note {
+  id Int @id @default(autoincrement())
+  userId Int
+  title String
+  content String
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("notes")
+}
+
